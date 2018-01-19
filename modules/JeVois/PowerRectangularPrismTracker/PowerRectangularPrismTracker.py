@@ -7,6 +7,8 @@ from enum import Enum
 class PowerRectangularPrismTracker:
     def __init__(self):
         self.timer = jevois.Timer("sandbox", 100, jevois.LOG_INFO)
+        self.HORIZONTAL_FIELD_OF_VIEW = 50
+        self.CAMERA_HORIZONTAL_RESOLUTION = 320
 
         #######################
         # Constants from GRIP #
@@ -24,9 +26,9 @@ class PowerRectangularPrismTracker:
         self.blur_output = None
 
         self.__hsv_threshold_input = self.blur_output
-        self.__hsv_threshold_hue = [35.611510791366904, 62.342954159592516]
-        self.__hsv_threshold_saturation = [84.84712230215827, 181.4006791171477]
-        self.__hsv_threshold_value = [68.79496402877697, 207.37691001697794]
+        self.__hsv_threshold_hue = [32.37410071942446, 62.342954159592516]
+        self.__hsv_threshold_saturation = [107.77877697841726, 181.4006791171477]
+        self.__hsv_threshold_value = [96.31294964028777, 255.0]
 
         self.hsv_threshold_output = None
 
@@ -68,7 +70,6 @@ class PowerRectangularPrismTracker:
 
 
         #jevois.LINFO("Input image is {} {}x{}".format(jevois.fccstr(inimg.fmt), inimg.width, inimg.height))
-        jevois.LINFO("Hi")
         outimg = inimg = inframe.getCvBGR()
 
         self.timer.start()
@@ -109,12 +110,34 @@ class PowerRectangularPrismTracker:
         ###############
         # Custom Code #
         ###############
-
+        contours_by_size = self.sortByArea(self.filter_contours_output)
+        is_first_contour = True
+        for contour in contours_by_size:
+            if is_first_contour:
+                moment = cv2.moments(contour)
+                cX = int(moment["m10"] / moment["m00"])
+                cY = int(moment["m01"] / moment["m00"])
+                cv2.circle(outimg, (cX, cY), 7, (255, 255, 255), -1)
+                jevois.LINFO("aX: {} x: {} y: {}".format(self.calculateOffset(cX, cY)[0], cX, cY))
+            is_first_contour = False
+        """
         if (len(self.filter_contours_output) > 0):
-            cv2.drawContours(outimg, self.sortByArea(self.filter_contours_output)[:1], -1, (0, 0, 255), 1)
-
+            biggest_contour = self.sortByArea(self.filter_contours_output)[0]
+            moment = cv2.moments(biggest_contour)
+            cX = int(moment["m10"] / moment["m00"])
+            cY = int(moment["m01"] / moment["m00"])
+            cv2.circle(outimg, (cX, cY), 7, (255, 255, 255), -1)
+            jevois.LINFO("x: {} y: {}".format(cX, cY))
+            # Draws Red Line around Outline of Contour
+            #cv2.drawContours(outimg, [biggest_contour], -1, (0, 0, 255), 1)
+            # Gets the (rotated) bounding box of the Contour
+            #rect = cv2.minAreaRect(biggest_contour)
+            #box = cv2.boxPoints(rect)
+            #cv2.drawContours(outimg, [box], 0, (0, 0, 255), 2)
+            #jevois.LINFO(biggest_contour.)
+        """
         # Draws all contours on original image in red
-        #cv2.drawContours(outimg, self.filter_contours_output, -1, (0, 0, 255), 1)
+        cv2.drawContours(outimg, self.filter_contours_output, -1, (0, 0, 255), 1)
         fps = self.timer.stop()
         height, width, channels = outimg.shape
         cv2.putText(outimg, fps, (3, height - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1, cv2.LINE_AA)
@@ -180,9 +203,20 @@ class PowerRectangularPrismTracker:
         sortedBy = sorted(conts, key=self.getArea) # sortedBy now has all the contours sorted by area
         return sortedBy
 
-    #
-    # Start of GRIP Static Methods
-    #
+    def calculateOffset(self, x, y): # Returns a tuple (x, y) angle offset
+        """
+        This assumes that y starts at the top of the frame and increases in value as it goes "down".
+        This also assumes that x starts at the left of the frame and increases in value as it goes to the right.
+        """
+        horizontal_pixels_per_degree = (self.CAMERA_HORIZONTAL_RESOLUTION / 2) / (self.HORIZONTAL_FIELD_OF_VIEW / 2)
+        cX = x - (self.CAMERA_HORIZONTAL_RESOLUTION / 2)
+        aX = cX / horizontal_pixels_per_degree
+        return (aX, 0)
+
+
+    ################################
+    # Start of GRIP Static Methods #
+    ################################
 
     @staticmethod
     def __normalize(input, type, a, b):

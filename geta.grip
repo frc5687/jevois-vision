@@ -26,26 +26,26 @@
       <grip:Input step="1" socket="2">
         <value>7.207207207207207</value>
       </grip:Input>
-      <grip:Output step="1" socket="0" previewed="true"/>
+      <grip:Output step="1" socket="0" previewed="false"/>
     </grip:Step>
     <grip:Step name="HSV Threshold">
       <grip:Input step="2" socket="0"/>
       <grip:Input step="2" socket="1">
         <value>
-          <double>35.611510791366904</double>
+          <double>32.37410071942446</double>
           <double>62.342954159592516</double>
         </value>
       </grip:Input>
       <grip:Input step="2" socket="2">
         <value>
-          <double>84.84712230215827</double>
+          <double>107.77877697841726</double>
           <double>181.4006791171477</double>
         </value>
       </grip:Input>
       <grip:Input step="2" socket="3">
         <value>
-          <double>68.79496402877697</double>
-          <double>207.37691001697794</double>
+          <double>96.31294964028777</double>
+          <double>255.0</double>
         </value>
       </grip:Input>
       <grip:Output step="2" socket="0" previewed="true"/>
@@ -105,32 +105,32 @@
   </steps>
   <connections>
     <grip:Connection>
-      <grip:Output step="4" socket="0" previewed="true"/>
-      <grip:Input step="5" socket="0"/>
-    </grip:Connection>
-    <grip:Connection>
       <grip:Output source="0" socket="0" previewed="true"/>
       <grip:Input step="0" socket="0"/>
-    </grip:Connection>
-    <grip:Connection>
-      <grip:Output step="1" socket="0" previewed="true"/>
-      <grip:Input step="2" socket="0"/>
     </grip:Connection>
     <grip:Connection>
       <grip:Output step="2" socket="0" previewed="true"/>
       <grip:Input step="4" socket="0"/>
     </grip:Connection>
     <grip:Connection>
-      <grip:Output step="0" socket="0" previewed="true"/>
-      <grip:Input step="1" socket="0"/>
-    </grip:Connection>
-    <grip:Connection>
       <grip:Output step="2" socket="0" previewed="true"/>
       <grip:Input step="3" socket="1"/>
     </grip:Connection>
     <grip:Connection>
+      <grip:Output step="0" socket="0" previewed="true"/>
+      <grip:Input step="1" socket="0"/>
+    </grip:Connection>
+    <grip:Connection>
       <grip:Output source="0" socket="0" previewed="true"/>
       <grip:Input step="3" socket="0"/>
+    </grip:Connection>
+    <grip:Connection>
+      <grip:Output step="1" socket="0" previewed="false"/>
+      <grip:Input step="2" socket="0"/>
+    </grip:Connection>
+    <grip:Connection>
+      <grip:Output step="4" socket="0" previewed="true"/>
+      <grip:Input step="5" socket="0"/>
     </grip:Connection>
   </connections>
   <settings>
@@ -143,7 +143,7 @@
     <deployJvmOptions>-Xmx50m -XX:-OmitStackTraceInFastThrow -XX:+HeapDumpOnOutOfMemoryError -XX:MaxNewSize=16m</deployJvmOptions>
   </settings>
   <codeGenerationSettings>
-    <language>Java</language>
+    <language>Python</language>
     <className>GripPipeline</className>
     <implementWpilibPipeline>false</implementWpilibPipeline>
     <saveDir>/home/jcharante/GRIP</saveDir>
