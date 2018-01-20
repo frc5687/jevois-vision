@@ -119,6 +119,7 @@ class PowerRectangularPrismTracker:
                 cY = int(moment["m01"] / moment["m00"])
                 cv2.circle(outimg, (cX, cY), 7, (255, 255, 255), -1)
                 jevois.LINFO("aX: {} x: {} y: {}".format(self.calculateOffset(cX, cY)[0], cX, cY))
+                jevois.sendSerial("aX: {} x: {} y: {}".format(self.calculateOffset(cX, cY)[0], cX, cY))
             is_first_contour = False
         """
         if (len(self.filter_contours_output) > 0):
