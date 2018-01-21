@@ -10,7 +10,9 @@ class PowerRectangularPrismTracker:
     def __init__(self):
         self.timer = jevois.Timer("sandbox", 100, jevois.LOG_INFO)
         self.HORIZONTAL_FIELD_OF_VIEW = 50
+        self.VERTICAL_FIELD_OF_VIEW = 50
         self.CAMERA_HORIZONTAL_RESOLUTION = 320
+        self.CAMERA_VERTICAL_RESOLUTION = 240
 
         #######################
         # Constants from GRIP #
@@ -213,11 +215,15 @@ class PowerRectangularPrismTracker:
         """
         This assumes that y starts at the top of the frame and increases in value as it goes "down".
         This also assumes that x starts at the left of the frame and increases in value as it goes to the right.
+        Such is the case with the JeVois camera.
         """
         horizontal_pixels_per_degree = (self.CAMERA_HORIZONTAL_RESOLUTION / 2) / (self.HORIZONTAL_FIELD_OF_VIEW / 2)
         cX = x - (self.CAMERA_HORIZONTAL_RESOLUTION / 2)
         aX = cX / horizontal_pixels_per_degree
-        return (aX, 0)
+        vertical_pixels_per_degree = (self.CAMERA_VERTICAL_RESOLUTION / 2) / (self.VERTICAL_FIELD_OF_VIEW / 2)
+        cY = y - (self.CAMERA_VERTICAL_RESOLUTION / 2)
+        aY = cY / vertical_pixels_per_degree
+        return (aX, aY)
 
 
     ################################
