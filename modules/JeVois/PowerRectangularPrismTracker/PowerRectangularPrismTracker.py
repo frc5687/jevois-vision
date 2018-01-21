@@ -3,6 +3,8 @@ import numpy as np
 import libjevois as jevois
 import math
 from enum import Enum
+import json
+
 
 class PowerRectangularPrismTracker:
     def __init__(self):
@@ -118,8 +120,11 @@ class PowerRectangularPrismTracker:
                 cX = int(moment["m10"] / moment["m00"])
                 cY = int(moment["m01"] / moment["m00"])
                 cv2.circle(outimg, (cX, cY), 7, (255, 255, 255), -1)
-                jevois.LINFO("aX: {} x: {} y: {}".format(self.calculateOffset(cX, cY)[0], cX, cY))
-                jevois.sendSerial("aX: {} x: {} y: {}".format(self.calculateOffset(cX, cY)[0], cX, cY))
+                # jevois.LINFO("aX: {} x: {} y: {}".format(self.calculateOffset(cX, cY)[0], cX, cY))
+                aX, aY = self.calculateOffset(cX, cY)
+                aX, aY = int(aX), int(aY)
+                info_string = "{aX};{aY}".format(aX=aX, aY=aY)
+                jevois.sendSerial("JVTI:" + info_string)
             is_first_contour = False
         """
         if (len(self.filter_contours_output) > 0):
