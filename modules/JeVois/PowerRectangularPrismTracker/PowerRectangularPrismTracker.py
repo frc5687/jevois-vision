@@ -81,6 +81,78 @@ class PowerRectangularPrismTracker:
         # End of Constants From GRIP #
         ##############################
 
+    def processNoUSB(self, inframe):
+        # Get the next camera image (may block until it is captured) and here convert it to OpenCV BGR by default. If
+        # you need a grayscale image instead, just use getCvGRAY() instead of getCvBGR(). Also supported are getCvRGB()
+        # and getCvRGBA():
+        source0 = inimg = inframe.getCvBGR()
+
+        #############
+        # GRIP CODE #
+        #############
+
+        # Step Normalize0:
+        self.__normalize_input = source0
+        (self.normalize_output) = self.__normalize(self.__normalize_input, self.__normalize_type,
+                                                   self.__normalize_alpha, self.__normalize_beta)
+
+        # Step Blur0:
+        self.__blur_input = self.normalize_output
+        (self.blur_output) = self.__blur(self.__blur_input, self.__blur_type, self.__blur_radius)
+
+        # Step HSV_Threshold0:
+        self.__hsv_threshold_input = self.blur_output
+        (self.hsv_threshold_output) = self.__hsv_threshold(self.__hsv_threshold_input, self.__hsv_threshold_hue,
+                                                           self.__hsv_threshold_saturation, self.__hsv_threshold_value)
+
+        # Step Mask0:
+        self.__mask_input = source0
+        self.__mask_mask = self.hsv_threshold_output
+        (self.mask_output) = self.__mask(self.__mask_input, self.__mask_mask)
+
+        # Step Find_Contours0:
+        self.__find_contours_input = self.hsv_threshold_output
+        (self.find_contours_output) = self.__find_contours(self.__find_contours_input,
+                                                           self.__find_contours_external_only)
+
+        # Step Filter_Contours0:
+        self.__filter_contours_contours = self.find_contours_output
+        (self.filter_contours_output) = self.__filter_contours(self.__filter_contours_contours,
+                                                               self.__filter_contours_min_area,
+                                                               self.__filter_contours_min_perimeter,
+                                                               self.__filter_contours_min_width,
+                                                               self.__filter_contours_max_width,
+                                                               self.__filter_contours_min_height,
+                                                               self.__filter_contours_max_height,
+                                                               self.__filter_contours_solidity,
+                                                               self.__filter_contours_max_vertices,
+                                                               self.__filter_contours_min_vertices,
+                                                               self.__filter_contours_min_ratio,
+                                                               self.__filter_contours_max_ratio)
+
+        #################
+        # END GRIP CODE #
+        #################
+
+        ###############
+        # Custom Code #
+        ###############
+        contours_by_size = self.sortByArea(self.filter_contours_output)
+        is_first_contour = True
+        for contour in contours_by_size:
+            if is_first_contour:
+                moment = cv2.moments(contour)
+                cX = moment["m10"] / moment["m00"]
+                cY = moment["m01"] / moment["m00"]
+                aX = int(
+                    getAngle(cX, self.HORIZONAL_FOCAL_LENGTH) - (self.HORIZONTAL_FIELD_OF_VIEW / 2)
+                )
+                aY = 0
+                info_string = "{aX};{aY}".format(aX=aX, aY=aY)
+                jevois.sendSerial("JVTI:" + info_string)
+            is_first_contour = False
+
+
     def process(self, inframe, outframe):
         # Get the next camera image (may block until it is captured) and here convert it to OpenCV BGR by default. If
         # you need a grayscale image instead, just use getCvGRAY() instead of getCvBGR(). Also supported are getCvRGB()
