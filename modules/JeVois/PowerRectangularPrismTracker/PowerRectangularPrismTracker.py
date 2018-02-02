@@ -3,7 +3,7 @@ import numpy as np
 import libjevois as jevois
 import math
 from enum import Enum
-import json
+import random
 
 
 def getFocalLength(imageSize, fov):
@@ -23,7 +23,6 @@ def getAngle(center, focal):
 
 class PowerRectangularPrismTracker:
     def __init__(self):
-        self.timer = jevois.Timer("sandbox", 100, jevois.LOG_INFO)
         self.HORIZONTAL_FIELD_OF_VIEW = 65
         self.VERTICAL_FIELD_OF_VIEW = 65
         self.CAMERA_HORIZONTAL_RESOLUTION = 320
@@ -149,9 +148,13 @@ class PowerRectangularPrismTracker:
                 )
                 aY = 0
                 info_string = "{aX};{aY}".format(aX=aX, aY=aY)
-                jevois.sendSerial("JVTI:" + info_string)
+                jevois.sendSerial("$:" + info_string)
             is_first_contour = False
-
+        """
+        x = random.randint(0, 50)
+        y = random.randint(0, 50)
+        jevois.sendSerial("$:" + "{};{}".format(x, y))
+        """
 
     def process(self, inframe, outframe):
         # Get the next camera image (may block until it is captured) and here convert it to OpenCV BGR by default. If
@@ -159,11 +162,8 @@ class PowerRectangularPrismTracker:
         # and getCvRGBA():
         source0 = inimg = inframe.getCvBGR()
 
-
         #jevois.LINFO("Input image is {} {}x{}".format(jevois.fccstr(inimg.fmt), inimg.width, inimg.height))
         outimg = inimg = inframe.getCvBGR()
-
-        self.timer.start()
 
         #############
         # GRIP CODE #
@@ -217,54 +217,12 @@ class PowerRectangularPrismTracker:
                 info_string = "{aX};{aY}".format(aX=aX, aY=aY)
                 jevois.sendSerial("JVTI:" + info_string)
             is_first_contour = False
-        """
-        if (len(self.filter_contours_output) > 0):
-            biggest_contour = self.sortByArea(self.filter_contours_output)[0]
-            moment = cv2.moments(biggest_contour)
-            cX = int(moment["m10"] / moment["m00"])
-            cY = int(moment["m01"] / moment["m00"])
-            cv2.circle(outimg, (cX, cY), 7, (255, 255, 255), -1)
-            jevois.LINFO("x: {} y: {}".format(cX, cY))
-            # Draws Red Line around Outline of Contour
-            #cv2.drawContours(outimg, [biggest_contour], -1, (0, 0, 255), 1)
-            # Gets the (rotated) bounding box of the Contour
-            #rect = cv2.minAreaRect(biggest_contour)
-            #box = cv2.boxPoints(rect)
-            #cv2.drawContours(outimg, [box], 0, (0, 0, 255), 2)
-            #jevois.LINFO(biggest_contour.)
-        """
         # Draws all contours on original image in red
         cv2.drawContours(outimg, self.filter_contours_output, -1, (0, 0, 255), 1)
-        fps = self.timer.stop()
-        height, width, channels = outimg.shape
-        cv2.putText(outimg, fps, (3, height - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1, cv2.LINE_AA)
+        #fps = self.timer.stop()
+        #height, width, channels = outimg.shape
+        #cv2.putText(outimg, fps, (3, height - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1, cv2.LINE_AA)
         outframe.sendCvBGR(outimg)
-
-        """
-
-        inimg = inframe.get()
-        jevois.LINFO("Input image is {} {}x{}".format(jevois.fccstr(inimg.fmt), inimg.width, inimg.height))
-
-        outimg = outframe.get()
-        jevois.LINFO("Output image is {} {}x{}".format(jevois.fccstr(outimg.fmt), outimg.width, outimg.height))
-
-        # Example of getting pixel data from the input and copying to the output:
-        jevois.paste(inimg, outimg, 0, 0)
-
-        # We are done with the input image:
-        inframe.done()
-
-        # Example of in-place processing:
-        #jevois.hFlipYUYV(outimg)
-
-        # Example of simple drawings:
-        #jevois.drawCircle(outimg, int(outimg.width/2), int(outimg.height/2), int(outimg.height/2.2),
-        #                  2, jevois.YUYV.White)
-        #jevois.writeText(outimg, "Hi from Python!", 20, 20, jevois.YUYV.White, jevois.Font.Font10x20)
-
-         # We are done with the output, ready to send it to host over USB:
-        outframe.send()
-        """
 
     def parseSerial(self, str):
         jevois.LINFO("parseserial received command [{}]".format(str))
@@ -295,7 +253,7 @@ class PowerRectangularPrismTracker:
         cy = int(M['m10']/M['m00'])
         return cy
 
-    def sortByArea(self, conts) : # Returns an array sorted by area from smallest to largest
+    def sortByArea(self, conts): # Returns an array sorted by area from smallest to largest
         contourNum = len(conts) # Gets number of contours
         sortedBy = sorted(conts, key=self.getArea) # sortedBy now has all the contours sorted by area
         return sortedBy
