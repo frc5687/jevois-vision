@@ -6,13 +6,29 @@ from enum import Enum
 import json
 
 
+def getFocalLength(imageSize, fov):
+    """
+    Returns the computed focal length
+    :param imageSize: Image size on the requested axis, in pixels.
+    :param fov: fov Field of view on the requested axis, in degrees.
+    :return: Focal length along the requested axis, in pixels.
+    """
+    fovRads = fov * math.pi / 180
+    return imageSize / (2 * math.tan(fovRads/2))
+
+
+def getAngle(center, focal):
+    return math.atan(center/focal) * 180 / math.pi
+
+
 class PowerRectangularPrismTracker:
     def __init__(self):
         self.timer = jevois.Timer("sandbox", 100, jevois.LOG_INFO)
-        self.HORIZONTAL_FIELD_OF_VIEW = 50
-        self.VERTICAL_FIELD_OF_VIEW = 50
+        self.HORIZONTAL_FIELD_OF_VIEW = 65
+        self.VERTICAL_FIELD_OF_VIEW = 65
         self.CAMERA_HORIZONTAL_RESOLUTION = 320
         self.CAMERA_VERTICAL_RESOLUTION = 240
+        self.HORIZONAL_FOCAL_LENGTH = getFocalLength(self.CAMERA_HORIZONTAL_RESOLUTION, self.HORIZONTAL_FIELD_OF_VIEW)
 
         #######################
         # Constants from GRIP #
@@ -64,7 +80,6 @@ class PowerRectangularPrismTracker:
         ##############################
         # End of Constants From GRIP #
         ##############################
-
 
     def process(self, inframe, outframe):
         # Get the next camera image (may block until it is captured) and here convert it to OpenCV BGR by default. If
@@ -119,12 +134,14 @@ class PowerRectangularPrismTracker:
         for contour in contours_by_size:
             if is_first_contour:
                 moment = cv2.moments(contour)
-                cX = int(moment["m10"] / moment["m00"])
-                cY = int(moment["m01"] / moment["m00"])
-                cv2.circle(outimg, (cX, cY), 7, (255, 255, 255), -1)
+                cX = moment["m10"] / moment["m00"]
+                cY = moment["m01"] / moment["m00"]
+                cv2.circle(outimg, (int(cX), int(cY)), 7, (255, 255, 255), -1)
                 # jevois.LINFO("aX: {} x: {} y: {}".format(self.calculateOffset(cX, cY)[0], cX, cY))
-                aX, aY = self.calculateOffset(cX, cY)
-                aX, aY = int(aX), int(aY)
+                aX = int(
+                    getAngle(cX, self.HORIZONAL_FOCAL_LENGTH) - (self.HORIZONTAL_FIELD_OF_VIEW / 2)
+                )
+                aY = 0
                 info_string = "{aX};{aY}".format(aX=aX, aY=aY)
                 jevois.sendSerial("JVTI:" + info_string)
             is_first_contour = False
@@ -210,20 +227,6 @@ class PowerRectangularPrismTracker:
         contourNum = len(conts) # Gets number of contours
         sortedBy = sorted(conts, key=self.getArea) # sortedBy now has all the contours sorted by area
         return sortedBy
-
-    def calculateOffset(self, x, y): # Returns a tuple (x, y) angle offset
-        """
-        This assumes that y starts at the top of the frame and increases in value as it goes "down".
-        This also assumes that x starts at the left of the frame and increases in value as it goes to the right.
-        Such is the case with the JeVois camera.
-        """
-        horizontal_pixels_per_degree = (self.CAMERA_HORIZONTAL_RESOLUTION / 2) / (self.HORIZONTAL_FIELD_OF_VIEW / 2)
-        cX = x - (self.CAMERA_HORIZONTAL_RESOLUTION / 2)
-        aX = cX / horizontal_pixels_per_degree
-        vertical_pixels_per_degree = (self.CAMERA_VERTICAL_RESOLUTION / 2) / (self.VERTICAL_FIELD_OF_VIEW / 2)
-        cY = y - (self.CAMERA_VERTICAL_RESOLUTION / 2)
-        aY = cY / vertical_pixels_per_degree
-        return (aX, aY)
 
 
     ################################
