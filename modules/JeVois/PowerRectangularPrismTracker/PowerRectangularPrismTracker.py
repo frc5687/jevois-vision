@@ -45,12 +45,11 @@ class PowerRectangularPrismTracker:
         self.blur_output = None
 
         self.__hsv_threshold_input = self.blur_output
-        self.__hsv_threshold_hue = [32.37410071942446, 62.342954159592516]
-        self.__hsv_threshold_saturation = [107.77877697841726, 181.4006791171477]
-        self.__hsv_threshold_value = [96.31294964028777, 255.0]
+        self.__hsv_threshold_hue = [32.37410071942446, 60.807117982118115]
+        self.__hsv_threshold_saturation = [80.26079136690647, 150.93992826390536]
+        self.__hsv_threshold_value = [64.20863309352518, 174.49658703071674]
 
         self.hsv_threshold_output = None
-
 
         self.__mask_mask = self.hsv_threshold_output
 
@@ -150,6 +149,9 @@ class PowerRectangularPrismTracker:
                 info_string = "{aX};{aY}".format(aX=aX, aY=aY)
                 jevois.sendSerial("$:" + info_string)
             is_first_contour = False
+        if (is_first_contour):
+            info_string = "{aX};{aY}".format(aX=0, aY=0)
+            jevois.sendSerial("$:" + info_string)
         """
         x = random.randint(0, 50)
         y = random.randint(0, 50)
