@@ -137,21 +137,18 @@ class PowerRectangularPrismTracker:
         ###############
         contours_by_size = self.sortByArea(self.filter_contours_output)
         is_first_contour = True
+        info_string = "0.0;0.0;0"  # defacto default value, gets overwritten if there are contours
         for contour in contours_by_size:
             if is_first_contour:
                 moment = cv2.moments(contour)
                 cX = moment["m10"] / moment["m00"]
                 cY = moment["m01"] / moment["m00"]
-                aX = int(
-                    getAngle(cX, self.HORIZONAL_FOCAL_LENGTH) - (self.HORIZONTAL_FIELD_OF_VIEW / 2)
-                )
-                aY = 0
-                info_string = "{aX};{aY}".format(aX=aX, aY=aY)
+                aX = float(getAngle(cX, self.HORIZONAL_FOCAL_LENGTH) - (self.HORIZONTAL_FIELD_OF_VIEW / 2))
+                aY = float(0.0)
+                info_string = "{:.2f};{:.2f};{}".format(aX, aY, 1)
                 jevois.sendSerial("$:" + info_string)
             is_first_contour = False
-        if (is_first_contour):
-            info_string = "{aX};{aY}".format(aX=0, aY=0)
-            jevois.sendSerial("$:" + info_string)
+        jevois.sendSerial("$:" + info_string)
         """
         x = random.randint(0, 50)
         y = random.randint(0, 50)
@@ -215,9 +212,9 @@ class PowerRectangularPrismTracker:
                 # jevois.LINFO("aX: {} x: {} y: {}".format(self.calculateOffset(cX, cY)[0], cX, cY))
                 aX = float(getAngle(cX, self.HORIZONAL_FOCAL_LENGTH) - (self.HORIZONTAL_FIELD_OF_VIEW / 2))
                 aY = float(0.0)
-                info_string = "{0:.2f};{0:.2f};{}".format(aX, aY, 1)
+                info_string = "{:.2f};{:.2f};{}".format(aX, aY, 1)
             is_first_contour = False
-        jevois.sendSerial("JVTI:" + info_string)
+        jevois.sendSerial("$:" + info_string)
         # Draws all contours on original image in red
         cv2.drawContours(outimg, self.filter_contours_output, -1, (0, 0, 255), 1)
         #fps = self.timer.stop()
