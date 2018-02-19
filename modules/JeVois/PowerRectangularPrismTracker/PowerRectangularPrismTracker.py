@@ -205,6 +205,7 @@ class PowerRectangularPrismTracker:
         ###############
         contours_by_size = self.sortByArea(self.filter_contours_output)
         is_first_contour = True
+        info_string = "0.0;0.0;0" # defacto default value, gets overwritten if there are contours
         for contour in contours_by_size:
             if is_first_contour:
                 moment = cv2.moments(contour)
@@ -212,13 +213,11 @@ class PowerRectangularPrismTracker:
                 cY = moment["m01"] / moment["m00"]
                 cv2.circle(outimg, (int(cX), int(cY)), 7, (255, 255, 255), -1)
                 # jevois.LINFO("aX: {} x: {} y: {}".format(self.calculateOffset(cX, cY)[0], cX, cY))
-                aX = int(
-                    getAngle(cX, self.HORIZONAL_FOCAL_LENGTH) - (self.HORIZONTAL_FIELD_OF_VIEW / 2)
-                )
-                aY = 0
-                info_string = "{aX};{aY}".format(aX=aX, aY=aY)
-                jevois.sendSerial("JVTI:" + info_string)
+                aX = float(getAngle(cX, self.HORIZONAL_FOCAL_LENGTH) - (self.HORIZONTAL_FIELD_OF_VIEW / 2))
+                aY = float(0.0)
+                info_string = "{0:.2f};{0:.2f};{}".format(aX, aY, 1)
             is_first_contour = False
+        jevois.sendSerial("JVTI:" + info_string)
         # Draws all contours on original image in red
         cv2.drawContours(outimg, self.filter_contours_output, -1, (0, 0, 255), 1)
         #fps = self.timer.stop()
