@@ -79,7 +79,7 @@ class PowerRectangularPrismTracker:
         # End of Constants From GRIP #
         ##############################
 
-    def processNoUSB(self, inframe):
+    def populate_contours(self, inframe):
         # Get the next camera image (may block until it is captured) and here convert it to OpenCV BGR by default. If
         # you need a grayscale image instead, just use getCvGRAY() instead of getCvBGR(). Also supported are getCvRGB()
         # and getCvRGBA():
@@ -115,7 +115,7 @@ class PowerRectangularPrismTracker:
 
         # Step Filter_Contours0:
         self.__filter_contours_contours = self.find_contours_output
-        (self.filter_contours_output) = self.__filter_contours(self.__filter_contours_contours,
+        self.filter_contours_output = self.__filter_contours(self.__filter_contours_contours,
                                                                self.__filter_contours_min_area,
                                                                self.__filter_contours_min_perimeter,
                                                                self.__filter_contours_min_width,
@@ -132,9 +132,9 @@ class PowerRectangularPrismTracker:
         # END GRIP CODE #
         #################
 
-        ###############
-        # Custom Code #
-        ###############
+    def processNoUSB(self, inframe):
+        self.populate_contours(inframe)
+
         contours_by_size = self.sortByArea(self.filter_contours_output)
         is_first_contour = True
         info_string = "0.0;0.0;0"  # defacto default value, gets overwritten if there are contours
@@ -149,67 +149,21 @@ class PowerRectangularPrismTracker:
                 jevois.sendSerial("$:" + info_string)
             is_first_contour = False
         jevois.sendSerial("$:" + info_string)
-        """
-        x = random.randint(0, 50)
-        y = random.randint(0, 50)
-        jevois.sendSerial("$:" + "{};{}".format(x, y))
-        """
 
     def process(self, inframe, outframe):
-        # Get the next camera image (may block until it is captured) and here convert it to OpenCV BGR by default. If
-        # you need a grayscale image instead, just use getCvGRAY() instead of getCvBGR(). Also supported are getCvRGB()
-        # and getCvRGBA():
-        source0 = inimg = inframe.getCvBGR()
+        self.populate_contours(inframe)
 
-        #jevois.LINFO("Input image is {} {}x{}".format(jevois.fccstr(inimg.fmt), inimg.width, inimg.height))
-        outimg = inimg = inframe.getCvBGR()
-
-        #############
-        # GRIP CODE #
-        #############
-
-        # Step Normalize0:
-        self.__normalize_input = source0
-        (self.normalize_output) = self.__normalize(self.__normalize_input, self.__normalize_type, self.__normalize_alpha, self.__normalize_beta)
-
-        # Step Blur0:
-        self.__blur_input = self.normalize_output
-        (self.blur_output) = self.__blur(self.__blur_input, self.__blur_type, self.__blur_radius)
-
-        # Step HSV_Threshold0:
-        self.__hsv_threshold_input = self.blur_output
-        (self.hsv_threshold_output) = self.__hsv_threshold(self.__hsv_threshold_input, self.__hsv_threshold_hue, self.__hsv_threshold_saturation, self.__hsv_threshold_value)
-
-        # Step Mask0:
-        self.__mask_input = source0
-        self.__mask_mask = self.hsv_threshold_output
-        (self.mask_output) = self.__mask(self.__mask_input, self.__mask_mask)
-
-        # Step Find_Contours0:
-        self.__find_contours_input = self.hsv_threshold_output
-        (self.find_contours_output) = self.__find_contours(self.__find_contours_input, self.__find_contours_external_only)
-
-        # Step Filter_Contours0:
-        self.__filter_contours_contours = self.find_contours_output
-        (self.filter_contours_output) = self.__filter_contours(self.__filter_contours_contours, self.__filter_contours_min_area, self.__filter_contours_min_perimeter, self.__filter_contours_min_width, self.__filter_contours_max_width, self.__filter_contours_min_height, self.__filter_contours_max_height, self.__filter_contours_solidity, self.__filter_contours_max_vertices, self.__filter_contours_min_vertices, self.__filter_contours_min_ratio, self.__filter_contours_max_ratio)
-
-        #################
-        # END GRIP CODE #
-        #################
-
-        ###############
-        # Custom Code #
-        ###############
+        source0 = outimg = inframe.getCvBGR()
         contours_by_size = self.sortByArea(self.filter_contours_output)
         is_first_contour = True
-        info_string = "0.0;0.0;0" # defacto default value, gets overwritten if there are contours
+        info_string = "0.0;0.0;0"  # defacto default value, gets overwritten if there are contours
         for contour in contours_by_size:
             if is_first_contour:
                 moment = cv2.moments(contour)
                 cX = moment["m10"] / moment["m00"]
                 cY = moment["m01"] / moment["m00"]
+                # Draw a circle over the center of the contour
                 cv2.circle(outimg, (int(cX), int(cY)), 7, (255, 255, 255), -1)
-                # jevois.LINFO("aX: {} x: {} y: {}".format(self.calculateOffset(cX, cY)[0], cX, cY))
                 aX = float(getAngle(cX, self.HORIZONAL_FOCAL_LENGTH) - (self.HORIZONTAL_FIELD_OF_VIEW / 2))
                 aY = float(0.0)
                 info_string = "{:.2f};{:.2f};{}".format(aX, aY, 1)
@@ -217,9 +171,6 @@ class PowerRectangularPrismTracker:
         jevois.sendSerial("$:" + info_string)
         # Draws all contours on original image in red
         cv2.drawContours(outimg, self.filter_contours_output, -1, (0, 0, 255), 1)
-        #fps = self.timer.stop()
-        #height, width, channels = outimg.shape
-        #cv2.putText(outimg, fps, (3, height - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1, cv2.LINE_AA)
         outframe.sendCvBGR(outimg)
 
     def parseSerial(self, str):
@@ -238,20 +189,41 @@ class PowerRectangularPrismTracker:
     ######################
     # Our Methods #
     ######################
-    def getArea(self, con): # Gets the area of the contour
-            return cv2.contourArea(con)
 
-    def getYcoord(self, con): # Gets the Y coordinate of the contour
+    def getArea(self, con):
+        """
+        Gets the area of the contour
+        :param con: The counter you want the area of
+        :return: 
+        """
+        return cv2.contourArea(con)
+
+    def getYcoord(self, con):
+        """
+        Gets the Y coordinate of the contour
+        :param con: 
+        :return: 
+        """
         M = cv2.moments(con)
         cy = int(M['m01']/M['m00'])
         return cy
 
-    def getXcoord(self, con): # Gets the X coordinate of the contour
+    def getXcoord(self, con):
+        """
+        Gets the X coordinate of the contour
+        :param con: 
+        :return: 
+        """
         M = cv2.moments(con)
         cy = int(M['m10']/M['m00'])
         return cy
 
-    def sortByArea(self, conts): # Returns an array sorted by area from smallest to largest
+    def sortByArea(self, conts):
+        """
+        Returns an array sorted by area from smallest to largest
+        :param conts: 
+        :return: 
+        """
         contourNum = len(conts) # Gets number of contours
         sortedBy = sorted(conts, key=self.getArea) # sortedBy now has all the contours sorted by area
         return sortedBy
