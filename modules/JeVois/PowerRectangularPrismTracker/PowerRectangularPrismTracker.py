@@ -115,7 +115,7 @@ class PowerRectangularPrismTracker:
 
         # Step Filter_Contours0:
         self.__filter_contours_contours = self.find_contours_output
-        self.filter_contours_output = self.__filter_contours(self.__filter_contours_contours,
+        (self.filter_contours_output) = self.__filter_contours(self.__filter_contours_contours,
                                                                self.__filter_contours_min_area,
                                                                self.__filter_contours_min_perimeter,
                                                                self.__filter_contours_min_width,
@@ -224,8 +224,8 @@ class PowerRectangularPrismTracker:
         :param conts: 
         :return: 
         """
-        contourNum = len(conts) # Gets number of contours
-        sortedBy = sorted(conts, key=self.getArea) # sortedBy now has all the contours sorted by area
+        contourNum = len(conts)  # Gets number of contours
+        sortedBy = sorted(conts, key=self.getArea)  # sortedBy now has all the contours sorted by area
         return sortedBy
 
 
